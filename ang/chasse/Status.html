@@ -1,32 +1,65 @@
-<div class="crm-container">
+<div class="crm-container crm-block chasse-container" id="bootstrap-theme">
   <h1 crm-page-title>Chassé Journey Status</h1>
 
-  <div style="margin-bottom:2rem;text-align:center; padding:2rem;background:hsl(40deg, 80%, 95%);" ng-show="(config || []).length == 0" >
-    No journeys planned yet. Shall we <a href='#chasse/config'>do that now</a>?
+  <div class="alert alert-info" ng-show="noJourneys" >
+    No journeys planned yet. Shall we <a href='#chasse/config/new'>do that now</a>?
   </div>
-  <p><a href="#/chasse/config" >Edit Chassé Journey Plans</a> | <a href ng-click="reload()">Refresh status</a></p>
+  <p><a class="btn btn-success" href ng-click="reload()">Refresh status</a></p>
 
-  <div ng-repeat="(i, journey) in config || []" style="margin-bottom:3rem" >
-    <h2>Journey: {{journey.name}}</h2>
-    <table>
-      <thead><tr>
-        <th>Step</th>
-        <th>Contacts</th>
-        <th>Next Step</th>
-      </tr></thead>
-      <tbody>
-        <tr ng-repeat="(step_offset, step) in journey.steps || []">
-          <td><strong>{{step.code}}</strong></td>
-          <td>{{ stats[step.code] || 0 }}</td>
-          <td>
-            <span ng-show="step.send_mailing" >→ Send Mailing <em>{{msg_tpls[step.send_mailing]}}</em></span>
-            <span ng-show="step.add_to_group" >→ Add to group <em>{{groups[journey.mailing_group]}}</em></span>
-            <span ng-show="step.next_code">→ Update to step <strong>{{step.next_code}}</strong></span>
-            <span ng-show="!step.next_code">→ [journey ends]</span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    <button ng-click="runJourney(i)" ng-disabled="busy">Process Now</button>
-  </div>
+  <div
+    ng-repeat="(id, journey) in config.journeys || []"
+    class="panel panel-default"
+    style="margin-bottom:3rem"
+    >
+    <div class="panel-heading" >
+      <div class="chasse-panel-with-actions" >
+        <h2 class="panel-title">Journey: {{journey.name}}</h2>
+        <div class="chasse-panel-actions">
+          <a href="#chasse/config/{{id}}" class="btn btn-sm btn-primary" >Edit</a>
+        </div>
+      </div>
+    </div>
+    <div class="panel-body" >
+      <div class="chasse-diagram">
+        <div ng-repeat="(step_offset, step) in journey.steps || []" class="chasse-step-container">
+          <div class="chasse-step-name">STEP {{ step.code }}</div>
+
+          <div class="chasse-diagram-step-inner chasse-diagram-step-inner--wait" ng-if="previousStepHasInterval(journey, step_offset) || waiting(step.code)">
+            <div class="chasse-diagram-bar-container">
+              <div class="chasse-bar" style="height:{{ waiting(step.code) / maxContacts * 100 }}%"></div>
+              <div class="chasse-label" >{{ waiting(step.code) }}</div>
+            </div>
+            <div class="chasse-diagram-action-container">
+              <div class="chasse-next" >
+                <div class="ui-icon fa-clock-o"></div>
+                {{ prettifyInterval(journey, step_offset) }}
+              </div>
+            </div>
+          </div><div class="chasse-diagram-step-inner {{ (previousStepHasInterval(journey, step_offset) || waiting(step.code)) ? 'half' : ''}}">
+            <div class="chasse-diagram-bar-container">
+              <div class="chasse-bar" style="height:{{ stats[step.code].ready / maxContacts * 100 }}%"></div>
+              <div class="chasse-label" >{{ stats[step.code].ready }}</div>
+            </div>
+            <div class="chasse-diagram-action-container">
+              <div class="chasse-next" >
+                <div ng-if="step.send_mailing" title="{{msg_tpls[step.send_mailing]}}">
+                  <div class="ui-icon fa-envelope"></div>
+                </div>
+                <div ng-if="step.add_to_group" title="{{groups[journey.mailing_group]}}">
+                  <div class="ui-icon fa-user-plus"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div><!--/chasse-diagram-->
+      <div ng-if="journeyHasSchedule(journey)" class="chasse-icon-box">
+        <i class="ui-icon fa-play-circle-o"></i> Automatic processing enabled {{ describeSchedule(journey.schedule); }}
+      </div>
+      <button ng-if="!journeyHasSchedule(journey)" class="btn btn-danger-outline" ng-click="runJourney(id)" ng-disabled="busy">Process Now</button>
+    </div><!--/panel-body-->
+  </div><!--/panel-->
+
+  <br />
+  <a class="btn btn-primary" href="#chasse/config/new" >Add New Journey</a>
 </div>
