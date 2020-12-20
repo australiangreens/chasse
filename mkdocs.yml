@@ -1,8 +1,9 @@
 site_name: Chassé
 repo_url: https://github.com/artfulrobot/chasse
-theme: material
+theme: 
+  name: material
 
-pages:
+nav:
 - Home: index.md
 - Installation: install.md
 - Configure Journeys: journeys.md
@@ -16,7 +17,8 @@ markdown_extensions:
   - admonition
   - def_list
   - codehilite
-  - toc(permalink=true)
+  - toc:
+      permalink: true
   - pymdownx.superfences
   - pymdownx.inlinehilite
   - pymdownx.tilde

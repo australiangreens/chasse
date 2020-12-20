@@ -192,3 +192,41 @@ function chasse_civicrm_searchTasks($objectType, &$tasks) {
     ];
   }
 }
+/**
+ * Implements hook_civicrm_alterAPIPermissions().
+ *
+ * Specify permissions for API calls required in ang/chasse/Config.js
+ *
+ * Sets to 'edit message templates' to match chasse_civicrm_navigationMenu
+ *
+ * @link https://docs.civicrm.org/dev/en/latest/hooks/hook_civicrm_alterAPIPermissions/
+ */
+function chasse_civicrm_alterAPIPermissions($entity, $action, &$params, &$permissions) {
+
+  $chasseAccessPermissions = ['edit message templates'];
+
+  // Allow users with 'edit message templates' read+write access to Chassé settings.
+
+  if ($entity === 'setting') {
+
+    if (($params['name'] ?? '') === 'chasse_config') {
+      $permissions['setting']['getvalue'] = $chasseAccessPermissions;
+    }
+
+    // Check 'chasse_config' is the *only* setting to "create" in the parameters for the api call before granting access.
+    if (array_diff ( array_keys($params), ['check_permissions', 'prettyprint', 'version'] ) === ['chasse_config'] ) {
+      $permissions['setting']['create'] = $chasseAccessPermissions;
+    }
+
+  }
+
+  // Allow users with 'edit message templates' to call:
+  // - Chasse.getstats
+  // - Chasse.step
+  $permissions['chasse']['getstats'] = $chasseAccessPermissions;
+  $permissions['chasse']['step'] = $chasseAccessPermissions;
+
+  // Note: we do NOT grant access to Chasse.processjourneyschedules
+  // as this is designed to be run by cron, which we assume to be
+  // run by a higher privileged user.
+}
